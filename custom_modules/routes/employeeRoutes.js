@@ -57,7 +57,7 @@ router.post("/", async (req, res) => {
 // ---------------------------------------------
 
 router.get(`/:id`, async (req, res) => {
-    // Ensure ID is a valid ObjectId.
+    // Ensure ID is a valid ObjectId. ** HANDLE WITH ERRORS PROPERLY LATER
     if (!db.mongoose.isValidObjectId(req.params.id)) {
         response = {
             "status": false,
@@ -81,6 +81,45 @@ router.get(`/:id`, async (req, res) => {
     } catch (err) {
         res.status(500).json(err);
     }
+});
+
+// ---------------------------------------------
+// **** Update Employee ****
+// ---------------------------------------------
+
+router.put(`/:id`, async (req, res) => {
+    // Ensure ID is a valid ObjectId. ** HANDLE WITH ERRORS PROPERLY LATER
+    if (!db.mongoose.isValidObjectId(req.params.id)) {
+        response = {
+            "status": false,
+            "message": `Employee with ID ${req.params.id} does not exist.`
+        }
+
+        res.status(404).json(response);
+        return;
+    }
+
+    // Grab what the user wishes to change.
+    const empJson = req.body;
+    const empJsonKeys = Object.keys(empJson);
+
+    const employee = await db.employee.findById(req.params.id);
+
+    // Define update variable.
+    const update = {
+        $set: {
+            
+        }
+    }
+
+    // If employee exists...
+    if (employee) {
+        // Grab all of the keys in the schema.
+        const schemaKeys = Object.keys(employee.schema.obj);
+        
+        
+    }
+
 });
 
 module.exports = router;
