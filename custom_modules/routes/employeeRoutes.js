@@ -92,19 +92,18 @@ router.post("/", async (req, res) => {
 router.get(`/:id`, query("id").notEmpty().escape(), async (req, res) => {
     const result = validationResult(req);
 
-    console.log(`Result:  ${result.isEmpty()}`);
-
-    // Ensure ID is a valid ObjectId. ** HANDLE WITH ERRORS PROPERLY LATER
-    if (!db.mongoose.isValidObjectId(req.params.id)) {
-        response = {
-            "status": false,
-            "message": `Employee with ID ${req.params.id} does not exist.`
+    // If there is no proper ID passed in the parameter, throw error.
+    // Or, if the ID is not a valid ObjectId, throw error.
+    try {
+        if (result.isEmpty() || !db.mongoose.isValidObjectId(req.params.id) ) {
+            throw new Error();
         }
-
-        res.status(404).json(response);
+    } catch (err) {
+        res.status(400).json(errors.ID_DOES_NOT_EXIST_ERROR);
         return;
     }
 
+    // If we get here, find the employee and send the result.
     try {
         // Find employee by ID.
         const employee = await db.employee.findById(req.params.id);
@@ -116,7 +115,7 @@ router.get(`/:id`, query("id").notEmpty().escape(), async (req, res) => {
         }
 
     } catch (err) {
-        res.status(500).json(err);
+        res.status(400).send(errors.DEFAULT_ERROR);
     }
 });
 
@@ -126,40 +125,47 @@ router.get(`/:id`, query("id").notEmpty().escape(), async (req, res) => {
 
 // Validate that the id parameter is not empty (and ensures it is safe from XSS).
 router.put(`/:id`, query("id").notEmpty().escape(), async (req, res) => {
+    const result = validationResult(req);
 
-    // Ensure ID is a valid ObjectId. ** HANDLE WITH ERRORS PROPERLY LATER
-    if (!db.mongoose.isValidObjectId(req.params.id)) {
-        response = {
-            "status": false,
-            "message": `Employee with ID ${req.params.id} does not exist.`
+    // If there is no proper ID passed in the parameter, throw error.
+    // Or, if the ID is not a valid ObjectId, throw error.
+    try {
+        if (result.isEmpty() || !db.mongoose.isValidObjectId(req.params.id) ) {
+            throw new Error();
         }
-
-        res.status(404).json(response);
+    } catch (err) {
+        res.status(400).json(errors.ID_DOES_NOT_EXIST_ERROR);
         return;
     }
 
-    // Grab the employee that the user wants to update.
-    const employee = await db.employee.findById(req.params.id);
-    // Grab the JSON body sent in for update.
-    const requestedChanges = req.body;
-    // Save the keys of the JSON request for easy access.
-    const changeKeys = Object.keys(requestedChanges);
+    // If we get here, run the update.
+    try {
+        // Grab the employee that the user wants to update.
+        const employee = await db.employee.findById(req.params.id);
+        // Grab the JSON body sent in for update.
+        const requestedChanges = req.body;
+        // Save the keys of the JSON request for easy access.
+        const changeKeys = Object.keys(requestedChanges);
 
-    // Loop through changeKeys...
-    changeKeys.forEach(key => {
-        // If individual key matches one in the employee schema, update.
-        if (employee[key]) {
-            employee[key] = requestedChanges[key];
+        // Loop through changeKeys...
+        changeKeys.forEach(key => {
+            // If individual key matches one in the employee schema, update.
+            if (employee[key]) {
+                employee[key] = requestedChanges[key];
+            }
+        });
+
+        response = {
+            "message": "Employee details updated successfully."
         }
-    });
 
-    response = {
-        "message": "Employee details updated successfully."
+        // Save and send response.
+        await employee.save();
+        res.status(200).send(response);
+
+    } catch (err) {
+        res.status(400).send(errors.DEFAULT_ERROR);
     }
-
-    // Save and send response.
-    await employee.save();
-    res.status(200).send(response);
 });
 
 // ---------------------------------------------
@@ -167,34 +173,39 @@ router.put(`/:id`, query("id").notEmpty().escape(), async (req, res) => {
 // ---------------------------------------------
 
 router.delete(`/`, async (req, res) => {
-    // Grab the ID from the query params.
-    const employeeId = req.query.id;
 
-    // Ensure ID is a valid ObjectId. ** HANDLE WITH ERRORS PROPERLY LATER
-    if (!db.mongoose.isValidObjectId(employeeId)) {
-        response = {
-            "status": false,
-            "message": `Employee with ID ${employeeId} does not exist.`
+    // If the ID is not a valid ObjectId, throw error.
+    try {
+        if (!db.mongoose.isValidObjectId(req.query.id) ) {
+            throw new Error();
         }
-
-        res.status(404).json(response);
+    } catch (err) {
+        res.status(400).json(errors.ID_DOES_NOT_EXIST_ERROR);
         return;
     }
 
-    // Find employee with ID.
-    const employee = await db.employee.findById(employeeId);
 
-    // Delete the employee.
-    await employee.deleteOne({ _id: employeeId });
+    try {
+        // Grab the ID from the query params.
+        const employeeId = req.query.id;
 
-    // Return response to the console.
-    response = {
-        "message": "Employee deleted successfully."
+        // Find employee with ID.
+        const employee = await db.employee.findById(employeeId);
+
+        // Delete the employee.
+        await employee.deleteOne({ _id: employeeId });
+
+        // Return response to the console.
+        response = {
+            "message": "Employee deleted successfully."
+        }
+
+        // Note: status 204 will not send a response, so I've used
+        // 200, which will allow this message to play.
+        res.status(200).send(response);
+    } catch (err) {
+        res.status(400).send(errors.DEFAULT_ERROR);
     }
-
-    // Note: status 204 will not send a response, so I've used
-    // 200, which will allow this message to play.
-    res.status(200).send(response);
 });
 
 module.exports = router;
