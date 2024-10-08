@@ -1,5 +1,6 @@
 const express = require("express");
 const db = require("../db.js");
+const { query, validationResult } = require("express-validator");
 const router = express.Router();
 
 // ---------------------------------------------
@@ -56,7 +57,12 @@ router.post("/", async (req, res) => {
 // **** Get Employee by ID ****
 // ---------------------------------------------
 
-router.get(`/:id`, async (req, res) => {
+// Validate that the id parameter is not empty (and ensures it is safe from XSS).
+router.get(`/:id`, query("id").notEmpty().escape(), async (req, res) => {
+    const result = validationResult(req);
+
+    console.log(`Result:  ${result.isEmpty()}`);
+
     // Ensure ID is a valid ObjectId. ** HANDLE WITH ERRORS PROPERLY LATER
     if (!db.mongoose.isValidObjectId(req.params.id)) {
         response = {
@@ -87,7 +93,9 @@ router.get(`/:id`, async (req, res) => {
 // **** Update Employee ****
 // ---------------------------------------------
 
-router.put(`/:id`, async (req, res) => {
+// Validate that the id parameter is not empty (and ensures it is safe from XSS).
+router.put(`/:id`, query("id").notEmpty().escape(), async (req, res) => {
+    
     // Ensure ID is a valid ObjectId. ** HANDLE WITH ERRORS PROPERLY LATER
     if (!db.mongoose.isValidObjectId(req.params.id)) {
         response = {

@@ -1,6 +1,5 @@
 // Configure Express.
 const express = require("express");
-const { query, validationResult } = require("express-validator");
 const app = express();
 const port = 3000;
 app.use(express.json());
