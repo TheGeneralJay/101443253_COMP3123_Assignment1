@@ -99,27 +99,63 @@ router.put(`/:id`, async (req, res) => {
         return;
     }
 
-    // Grab what the user wishes to change.
-    const empJson = req.body;
-    const empJsonKeys = Object.keys(empJson);
-
+    // Grab the employee that the user wants to update.
     const employee = await db.employee.findById(req.params.id);
+    // Grab the JSON body sent in for update.
+    const requestedChanges = req.body;
+    // Save the keys of the JSON request for easy access.
+    const changeKeys = Object.keys(requestedChanges);
 
-    // Define update variable.
-    const update = {
-        $set: {
-            
+    // Loop through changeKeys...
+    changeKeys.forEach(key => {
+        // If individual key matches one in the employee schema, update.
+        if (employee[key]) {
+            employee[key] = requestedChanges[key];
         }
+    });
+
+    response = {
+        "message": "Employee details updated successfully."
     }
 
-    // If employee exists...
-    if (employee) {
-        // Grab all of the keys in the schema.
-        const schemaKeys = Object.keys(employee.schema.obj);
-        
-        
+    // Save and send response.
+    await employee.save();
+    res.status(200).send(response);
+});
+
+// ---------------------------------------------
+// **** Delete Employee ****
+// ---------------------------------------------
+
+router.delete(`/`, async (req, res) => {
+    // Grab the ID from the query params.
+    const employeeId = req.query.id;
+
+    // Ensure ID is a valid ObjectId. ** HANDLE WITH ERRORS PROPERLY LATER
+    if (!db.mongoose.isValidObjectId(employeeId)) {
+        response = {
+            "status": false,
+            "message": `Employee with ID ${employeeId} does not exist.`
+        }
+
+        res.status(404).json(response);
+        return;
     }
 
+    // Find employee with ID.
+    const employee = await db.employee.findById(employeeId);
+
+    // Delete the employee.
+    await employee.deleteOne({ _id: employeeId });
+
+    // Return response to the console.
+    response = {
+        "message": "Employee deleted successfully."
+    }
+
+    // Note: status 204 will not send a response, so I've used
+    // 200, which will allow this message to play.
+    res.status(200).send(response);
 });
 
 module.exports = router;
