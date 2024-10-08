@@ -2,6 +2,7 @@ const express = require("express");
 const db = require("../db.js");
 const { query, validationResult } = require("express-validator");
 const router = express.Router();
+const errors = require("../errors/errorHandler.js");
 
 // ---------------------------------------------
 // DB Connection
@@ -24,7 +25,7 @@ router.get("/", async (req, res) => {
         // Return them in JSON.
         res.status(200).json(employees);
     } catch (err) {
-        res.status(false).send(err);
+        res.status(400).send(errors.DEFAULT_ERROR);
     }
 });
 
@@ -32,11 +33,41 @@ router.get("/", async (req, res) => {
 // **** Create Employees ****
 // ---------------------------------------------
 
-router.post("/", async (req, res) => {
-    // Create new employee based on request body.
-    const employee = new db.employee(req.body);
+router.post("/", async (req, res) => {    
+    // Grab request body to help with error handling.
+    let { 
+        first_name, 
+        last_name, 
+        email, 
+        position, 
+        salary, 
+        date_of_joining, 
+        department
+    } = req.body;
 
     try {
+        // If any of the parameters are empty, throw error.
+        if (
+            first_name == undefined ||
+            last_name == undefined ||
+            email == undefined ||
+            position == undefined ||
+            salary == undefined ||
+            date_of_joining == undefined ||
+            department == undefined
+        ) {
+            throw new Error();
+        }
+    } catch (err) {
+        res.status(400).send(errors.EMPTY_INPUT_ERROR);
+        return;
+    }
+
+    // If we get here, try to make the new employee.
+    try {
+        // Create new employee based on request body.
+        const employee = new db.employee(req.body);
+
         // Save the employee to the DB.
         await employee.save();
 
@@ -49,7 +80,7 @@ router.post("/", async (req, res) => {
         res.status(201).json(response);
 
     } catch (err) {
-        res.status(false).send(err);
+        res.status(400).send(Derrors.EFAULT_ERROR);
     }
 });
 
@@ -95,7 +126,7 @@ router.get(`/:id`, query("id").notEmpty().escape(), async (req, res) => {
 
 // Validate that the id parameter is not empty (and ensures it is safe from XSS).
 router.put(`/:id`, query("id").notEmpty().escape(), async (req, res) => {
-    
+
     // Ensure ID is a valid ObjectId. ** HANDLE WITH ERRORS PROPERLY LATER
     if (!db.mongoose.isValidObjectId(req.params.id)) {
         response = {
