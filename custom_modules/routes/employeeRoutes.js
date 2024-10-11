@@ -80,7 +80,7 @@ router.post("/", async (req, res) => {
         res.status(201).json(response);
 
     } catch (err) {
-        res.status(400).send(Derrors.EFAULT_ERROR);
+        res.status(400).send(errors.DEFAULT_ERROR);
     }
 });
 
