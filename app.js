@@ -5,7 +5,7 @@ const port = 3000;
 app.use(express.json());
 
 app.use(function (req, res, next) {
-  const origin = "https://employee-management-56b09.web.app/";
+  const origin = "https://employee-management-56b09.firebaseapp.com/";
 
   res.setHeader("Access-Control-Allow-Origin", origin);
   res.header(
