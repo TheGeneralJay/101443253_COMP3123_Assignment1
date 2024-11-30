@@ -4,7 +4,7 @@ const app = express();
 const port = 3000;
 
 app.use((req, res, next) => {
-  const origin = "https://employee-management-56b09.firebaseapp.com/";
+  const origin = "https://employee-management-56b09.firebaseapp.com";
   res.header("Access-Control-Allow-Origin", origin);
   res.header("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE");
   res.header(
